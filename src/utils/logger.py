@@ -1,17 +1,18 @@
 import logging
 import os
 from logging.handlers import RotatingFileHandler
-from src.utils.config import cfg
+from typing import List
 
 
 class LoggerConfigurator:
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.root_logger = logging.getLogger()
-        self.root_logger.setLevel(self._get_level_from_string(cfg["logger"]["level"]))
-        self._rotate: int = cfg["logger"]["rotate"]
-        self._path: str = cfg["logger"]["path"]
-        self._max_bytes: int = cfg["logger"]["max_bytes"]
-        self._backup_count: int = cfg["logger"]["backup_count"]
+        self.root_logger.setLevel(self._get_level_from_string(config.get("logger.level")))
+        self._rotate: int = config.get("logger.rotate")
+        self._path: str = config.get("logger.path")
+        self._max_bytes: int = config.get("logger.max_bytes")
+        self._backup_count: int = config.get("logger.backup_count")
 
     def _get_level_from_string(self, level_str):
         levels = {
@@ -33,7 +34,7 @@ class LoggerConfigurator:
     def _setup_formatter(self):
         return logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
 
-    def _setup_handlers(self):
+    def _setup_handlers(self) -> List[logging.Handler]:
         handlers = []
         if self._rotate:
             if not os.path.exists(self._path):
@@ -48,10 +49,11 @@ class LoggerConfigurator:
                 f"{self._path}/all_log_{os.getpid()}.log", mode="w"
             )
 
-        log_handler.setLevel(self._get_level_from_string(cfg["logger"]["level"]))
+        log_handler.setLevel(self._get_level_from_string(self.config.get("logger.level")))
         stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(self._get_level_from_string(cfg["logger"]["level"]))
-        if cfg["logger"]["format_full"]:
+        stream_handler.setLevel(self._get_level_from_string(self.config.get("logger.level")))
+        
+        if self.config.get("logger.format_full"):
             log_handler.setFormatter(self._setup_formatter())
             stream_handler.setFormatter(self._setup_formatter())
         else:
@@ -59,7 +61,7 @@ class LoggerConfigurator:
             stream_handler.setFormatter(self._setup_formatter_full())
 
         handlers.append(log_handler)
-        if cfg["logger"]["file_write"]:
+        if self.config.get("logger.file_write"):
             handlers.append(stream_handler)
 
         return handlers

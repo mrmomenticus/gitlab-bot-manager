@@ -1,14 +1,15 @@
 from aiogram import Bot, Dispatcher
-from src.telegram_core.constants import BOT_TOKEN
+
+from src.utils.config import Config
 
 
 class PagerBot:
-    def __init__(self) -> None:
+    def __init__(self, token: str) -> None:
         """
         Инициализация бота.
         :param token: токен для бота
         """
-        self.bot = Bot(BOT_TOKEN)
+        self.bot = Bot(token)
         self.dp = Dispatcher()
 
     def add_routes(self, routes: list) -> None:
@@ -35,8 +36,9 @@ class BotManager:
     Класс для работы с ботом. Выступает в роли синглтона
     """
 
-    def __init__(self) -> None:
-        self.bot = PagerBot()
+    def __init__(self, config: Config) -> None:
+        self._config = config
+        self.bot = PagerBot(self._config.get()["token-bot"])
 
     def get_pager_bot(self) -> PagerBot:
         return self.bot
